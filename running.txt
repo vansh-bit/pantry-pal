@@ -1,0 +1,31 @@
+Terminal 1 (Backend: Django API on 8000)
+cd /Users/vanshsharma/Downloads/PantryPal_Full/home/claude/pantrypal/backend
+
+# Create a clean venv (recommended, since your old .venv may be broken)
+python3 -m venv .venv_local
+
+# Activate it
+source .venv_local/bin/activate
+
+# Install deps
+pip install -r requirements.txt
+
+# Run migrations
+python manage.py migrate
+
+# (Optional) seed demo/admin data
+python manage.py seed_data
+
+# Start backend server
+python manage.py runserver 8000
+Terminal 2 (Frontend: React app on 3000)
+cd /Users/vanshsharma/Downloads/PantryPal_Full/home/claude/pantrypal/frontend
+
+# Install deps (if not already)
+npm install
+
+# Start frontend (normal)
+npm start
+If npm start fails with react-scripts ... bad interpreter, run this instead:
+
+node node_modules/react-scripts/bin/react-scripts.js start
