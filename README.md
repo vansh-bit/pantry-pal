@@ -1,61 +1,75 @@
 # 🥘 Pantry Pal
 
-A full-stack recipe discovery and pantry management web app.
+A full-stack web app to discover recipes and manage your pantry. You can browse recipes, track ingredients you already have, and get suggestions based on what’s available.
 
-**Stack:** Python · Django · Django REST Framework · PostgreSQL · React.js · Axios · Vercel
+**Tech stack:** Django · Django REST Framework · PostgreSQL · React · Axios · Vercel
 
 ---
 
-## Quick Start (Local Development)
+## Running locally
 
 ### Backend
+
 ```bash
 cd backend
 pip install -r requirements.txt
-cp .env.example .env          # fill in your values
+cp .env.example .env
+# fill in the required values in .env
+
 python manage.py migrate
-python manage.py seed_data    # creates sample data + admin account
+python manage.py seed_data
 python manage.py runserver
 ```
-API runs at http://localhost:8000
 
-**Default accounts after seeding:**
-- Admin: `admin@pantrypal.com` / `admin123`
-- Demo:  `demo@pantrypal.com`  / `demo1234`
+Backend runs on: http://localhost:8000
 
-### Frontend
-```bash
-cd frontend
-npm install
-# .env already set to http://localhost:8000
-npm start
-```
-App runs at http://localhost:3000
+**Test accounts (created by seed_data):**
+
+* Admin → `admin@pantrypal.com` / `admin123`
+* Demo → `demo@pantrypal.com` / `demo1234`
 
 ---
 
-## Deployment to Vercel
+### Frontend
 
-### Step 1 — PostgreSQL database
-1. Create a free database at [Supabase](https://supabase.com) or [Neon](https://neon.tech)
-2. Copy the connection string — looks like: `postgresql://user:pass@host:5432/dbname`
+```bash
+cd frontend
+npm install
+npm start
+```
 
-### Step 2 — Deploy the Django backend
-1. Push the `backend/` folder to a GitHub repo
-2. Import to Vercel → Framework: **Other**
-3. Add environment variables in Vercel dashboard:
+Frontend runs on: http://localhost:3000
 
-| Variable | Value |
-|---|---|
-| `SECRET_KEY` | Generate at https://djecrety.ir |
-| `DEBUG` | `False` |
-| `DATABASE_URL` | Your PostgreSQL connection string |
-| `ALLOWED_HOSTS` | `your-backend.vercel.app,localhost` |
-| `CORS_ALLOWED_ORIGINS` | `https://your-frontend.vercel.app,http://localhost:3000` |
-| `OPENAI_API_KEY` | Optional, enables AI pantry suggestions |
-| `OPENAI_MODEL` | Optional, default `gpt-4o-mini` |
+---
 
-4. After first deploy, run migrations via Vercel CLI:
+## Deployment (Vercel)
+
+### 1. Set up database
+
+Create a PostgreSQL database using something like Supabase or Neon.
+Copy the connection string (format: `postgresql://user:pass@host:5432/dbname`).
+
+---
+
+### 2. Deploy backend
+
+* Push `backend/` to GitHub
+* Import into Vercel (Framework: **Other**)
+
+Add these environment variables:
+
+| Variable             | Value                                                  |
+| -------------------- | ------------------------------------------------------ |
+| SECRET_KEY           | your secret key                                        |
+| DEBUG                | False                                                  |
+| DATABASE_URL         | postgres connection string                             |
+| ALLOWED_HOSTS        | your-backend.vercel.app,localhost                      |
+| CORS_ALLOWED_ORIGINS | https://your-frontend.vercel.app,http://localhost:3000 |
+| OPENAI_API_KEY       | optional                                               |
+| OPENAI_MODEL         | optional                                               |
+
+Run migrations after deploy:
+
 ```bash
 vercel env pull
 python manage.py migrate
@@ -63,45 +77,49 @@ python manage.py seed_data
 python manage.py createsuperuser
 ```
 
-### Step 3 — Deploy the React frontend
-1. Push `frontend/` to a GitHub repo
-2. Import to Vercel → Framework: **Create React App** (auto-detected)
-3. Add environment variable:
+---
 
-| Variable | Value |
-|---|---|
-| `REACT_APP_API_URL` | `https://your-backend.vercel.app` |
+### 3. Deploy frontend
 
-4. Deploy — done!
+* Push `frontend/` to GitHub
+* Import into Vercel (auto-detects React)
+
+Add:
+
+| Variable          | Value                           |
+| ----------------- | ------------------------------- |
+| REACT_APP_API_URL | https://your-backend.vercel.app |
+
+Deploy.
 
 ---
 
 ## Features
-- 🔐 Token-based auth (register / login / logout)
-- 📖 Browse & search approved recipes with filters
-- ✍️ Submit recipes (multi-step form) with admin approval workflow
-- ⭐ Rate and review recipes (one review per user)
-- 🥕 Personal pantry — track what ingredients you have
-- ✨ AI pantry meal planner — smart recipe suggestions from your pantry
-- 🔍 Find recipes from your pantry ingredients
-- 📜 Search history with re-run and delete
-- 🛡️ Admin panel — approve/reject recipes, manage ingredients
-- 🎨 Warm & cozy food-app design (earthy oranges, creams, warm greens)
 
-## API Overview
-Base URL: `/api/`
+* User authentication (register, login, logout)
+* Browse and filter recipes
+* Add your own recipes (with admin approval)
+* Rate and review recipes
+* Pantry tracking (ingredients you have)
+* Recipe suggestions based on pantry items
+* Search with history tracking
+* Admin panel for managing content
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/auth/register/` | Create account |
-| POST | `/auth/login/` | Get token |
-| GET | `/recipes/` | List approved recipes |
-| POST | `/recipes/` | Create recipe |
-| GET | `/recipes/{id}/` | Recipe detail |
-| GET | `/recipes/my-recipes/` | Your recipes |
-| POST | `/recipes/{id}/reviews/` | Submit review |
-| GET | `/pantry/` | Your pantry |
-| POST | `/pantry/ai-suggestions/` | AI meal suggestions from pantry |
-| POST | `/search/` | Search + log history |
-| GET | `/ingredients/` | Ingredient catalog |
-| GET | `/tags/` | All tags |
+---
+
+## API (base: `/api/`)
+
+| Method | Endpoint                | Description         |
+| ------ | ----------------------- | ------------------- |
+| POST   | /auth/register/         | Register user       |
+| POST   | /auth/login/            | Login and get token |
+| GET    | /recipes/               | List recipes        |
+| POST   | /recipes/               | Create recipe       |
+| GET    | /recipes/{id}/          | Recipe details      |
+| GET    | /recipes/my-recipes/    | User’s recipes      |
+| POST   | /recipes/{id}/reviews/  | Add review          |
+| GET    | /pantry/                | Get pantry          |
+| POST   | /pantry/ai-suggestions/ | Get suggestions     |
+| POST   | /search/                | Search recipes      |
+| GET    | /ingredients/           | Ingredients list    |
+| GET    | /tags/                  | Tags list           |
