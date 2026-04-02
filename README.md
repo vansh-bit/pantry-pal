@@ -49,12 +49,22 @@ Frontend runs on: http://localhost:3000
 Create a PostgreSQL database using something like Supabase or Neon.
 Copy the connection string (format: `postgresql://user:pass@host:5432/dbname`).
 
+For Supabase:
+
+```env
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.your-project-ref.supabase.co:5432/postgres
+```
+
+For Vercel serverless runtime, prefer the Supabase pooler connection string if Supabase shows one in the `Connect` screen.
+
 ---
 
 ### 2. Deploy backend
 
-* Push `backend/` to GitHub
-* Import into Vercel (Framework: **Other**)
+* Push the project to GitHub
+* Create a Vercel project with root directory `home/claude/pantrypal/backend`
+* Import into Vercel as framework `Other`
+* Keep [build.sh](/Users/vanshsharma/Downloads/PantryPal_Full/home/claude/pantrypal/backend/build.sh) in the backend root so Vercel can use it during deployment
 
 Add these environment variables:
 
@@ -63,15 +73,15 @@ Add these environment variables:
 | SECRET_KEY           | your secret key                                        |
 | DEBUG                | False                                                  |
 | DATABASE_URL         | postgres connection string                             |
-| ALLOWED_HOSTS        | your-backend.vercel.app,localhost                      |
+| ALLOWED_HOSTS        | localhost,127.0.0.1,.vercel.app                        |
 | CORS_ALLOWED_ORIGINS | https://your-frontend.vercel.app,http://localhost:3000 |
 | OPENAI_API_KEY       | optional                                               |
 | OPENAI_MODEL         | optional                                               |
 
-Run migrations after deploy:
+Run migrations from your local machine after setting `DATABASE_URL` to Supabase:
 
 ```bash
-vercel env pull
+cd backend
 python manage.py migrate
 python manage.py seed_data
 python manage.py createsuperuser
@@ -81,7 +91,7 @@ python manage.py createsuperuser
 
 ### 3. Deploy frontend
 
-* Push `frontend/` to GitHub
+* Create another Vercel project with root directory `home/claude/pantrypal/frontend`
 * Import into Vercel (auto-detects React)
 
 Add:
@@ -91,6 +101,8 @@ Add:
 | REACT_APP_API_URL | https://your-backend.vercel.app |
 
 Deploy.
+
+After frontend deploy, update backend `CORS_ALLOWED_ORIGINS` with the exact frontend Vercel URL and redeploy backend.
 
 ---
 

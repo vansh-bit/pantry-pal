@@ -1,0 +1,28 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+db.sqlite3
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# Environment files
+.env
+.env.*
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+backend/.env
+frontend/.env
+frontend/.env.production
+
+# Build output
+frontend/build/
+backend/staticfiles/
+
+# OS files
+.DS_Store
