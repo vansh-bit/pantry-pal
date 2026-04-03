@@ -11,6 +11,7 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,.vercel.app').split(',')
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -74,3 +75,60 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS','http://localhost:3000,http://127.0.0.1:3000').split(',')
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOW_CREDENTIALS = True
+
+JAZZMIN_SETTINGS = {
+    "site_title": "Pantry Pal Admin",
+    "site_header": "Pantry Pal",
+    "site_brand": "🍳 Pantry Pal",
+    "welcome_sign": "Welcome to Pantry Pal Admin",
+    "copyright": "Pantry Pal",
+    "search_model": ["recipes.Recipe", "users.CustomUser"],
+    "topmenu_links": [
+        {"name": "Home", "url": "admin:index"},
+        {"name": "View Site", "url": "https://pantry-pal-frontend.vercel.app", "new_window": True},
+    ],
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "users.CustomUser": "fas fa-user",
+        "recipes.Recipe": "fas fa-utensils",
+        "recipes.Ingredient": "fas fa-carrot",
+        "recipes.Review": "fas fa-star",
+        "recipes.Tag": "fas fa-tag",
+    },
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle",
+    "related_modal_active": True,
+    "show_ui_builder": False,
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-orange",
+    "accent": "accent-orange",
+    "navbar": "navbar-dark",
+    "no_navbar_border": True,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-orange",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": True,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "flatly",
+    "dark_mode_theme": "darkly",
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success",
+    },
+}
