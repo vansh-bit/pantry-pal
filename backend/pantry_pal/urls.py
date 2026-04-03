@@ -15,3 +15,5 @@ urlpatterns = [
     path('api/', include('recipes.urls')),
     path('api/health/', health_check),
 ]
+
+
