@@ -1,16 +1,8 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "pantry_pal/wsgi.py",
-      "use": "@vercel/python",
-      "config": { "maxLambdaSize": "15mb", "runtime": "python3.11" }
-    }
-  ],
   "routes": [
     { "src": "/api/(.*)", "dest": "pantry_pal/wsgi.py" },
     { "src": "/admin/(.*)", "dest": "pantry_pal/wsgi.py" },
-    { "src": "/static/(.*)", "dest": "pantry_pal/wsgi.py" },
-    { "src": "/(.*)", "dest": "pantry_pal/wsgi.py" }
+    { "src": "/static/(.*)", "dest": "pantry_pal/wsgi.py" }
   ]
 }
