@@ -15,7 +15,7 @@ class IsOwnerOrAdmin(permissions.BasePermission):
         return obj.author == request.user or request.user.is_staff
 
 class RecipeListCreate(generics.ListCreateAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['created_at', 'prep_time_mins', 'calories']
     ordering = ['-created_at']

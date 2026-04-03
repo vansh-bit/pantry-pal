@@ -6,6 +6,7 @@ urlpatterns = [
     path('auth/login/', views.login_view),
     path('auth/logout/', views.logout_view),
     path('auth/me/', views.me),
+    path('ops/run-migrations/', views.run_migrations),
     path('pantry/', views.PantryListCreate.as_view()),
     path('pantry/<int:pk>/', views.PantryDetail.as_view()),
     path('pantry/ai-suggestions/', views.pantry_ai_suggestions),

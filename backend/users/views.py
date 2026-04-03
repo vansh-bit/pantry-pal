@@ -3,7 +3,9 @@ import os
 import urllib.error
 import urllib.parse
 import urllib.request
+from io import StringIO
 
+from django.core.management import call_command
 from rest_framework import status, generics, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -187,6 +189,25 @@ def register(request):
         token, _ = Token.objects.get_or_create(user=user)
         return Response({'token': token.key, 'user': UserSerializer(user).data}, status=201)
     return Response(serializer.errors, status=400)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def run_migrations(request):
+    supplied_key = request.headers.get('X-Migration-Key', '').strip()
+    expected_key = os.environ.get('MIGRATION_KEY', os.environ.get('SECRET_KEY', '')).strip()
+    if not expected_key or supplied_key != expected_key:
+        return Response({'detail': 'Forbidden'}, status=403)
+
+    output = StringIO()
+    try:
+        call_command('migrate', interactive=False, stdout=output, stderr=output, verbosity=1)
+        return Response({'detail': 'Migrations completed.', 'output': output.getvalue()})
+    except Exception as exc:
+        return Response(
+            {'detail': 'Migration failed.', 'error': str(exc), 'output': output.getvalue()},
+            status=500,
+        )
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
