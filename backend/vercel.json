@@ -2,6 +2,13 @@
   "version": 2,
   "builds": [
     {
+      "src": "build_files.sh",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "staticfiles"
+      }
+    },
+    {
       "src": "pantry_pal/wsgi.py",
       "use": "@vercel/python",
       "config": {
@@ -12,7 +19,13 @@
     }
   ],
   "routes": [
-    { "src": "/static/(.*)", "dest": "pantry_pal/wsgi.py" },
+    {
+      "src": "/static/(.*)",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      },
+      "dest": "pantry_pal/wsgi.py"
+    },
     { "src": "/admin/(.*)", "dest": "pantry_pal/wsgi.py" },
     { "src": "/(.*)", "dest": "pantry_pal/wsgi.py" }
   ]
