@@ -285,3 +285,26 @@ def pantry_ai_suggestions(request):
         'ai_summary': summary,
         'generated_with_ai': generated_with_ai,
     })
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def list_users(request):
+    if not request.user.is_staff:
+        return Response({'detail': 'Forbidden'}, status=403)
+    users = CustomUser.objects.all().order_by('-date_joined')
+    return Response(UserSerializer(users, many=True).data)
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def toggle_admin(request, pk):
+    if not request.user.is_staff:
+        return Response({'detail': 'Forbidden'}, status=403)
+    if request.user.pk == pk:
+        return Response({'detail': 'Cannot change your own role'}, status=400)
+    try:
+        user = CustomUser.objects.get(pk=pk)
+        user.is_staff = not user.is_staff
+        user.save()
+        return Response(UserSerializer(user).data)
+    except CustomUser.DoesNotExist:
+        return Response(status=404)
