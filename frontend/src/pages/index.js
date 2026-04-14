@@ -498,6 +498,7 @@ export function AdminPanel() {
             {id:'pending',label:`⏳ Pending${pending.length>0?` (${pending.length})`:''}` },
             {id:'all',label:'📋 All Recipes'},
             {id:'ingredients',label:'🧄 Ingredients'},
+            {id:'users',label:'👥 Users'},
           ].map(t=>(
             <button key={t.id} onClick={()=>setTab(t.id)} style={{
               padding:'8px 20px',borderRadius:'var(--radius-sm)',border:'none',cursor:'pointer',
@@ -672,7 +673,96 @@ export function AdminPanel() {
             )}
           </div>
         )}
+
+        {/* USERS TAB */}
+        {tab==='users' && <UsersTab addToast={addToast}/>}
+
       </div>
+    </div>
+  );
+}
+
+function UsersTab({ addToast }) {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [toggling, setToggling] = useState(null);
+  const { user: currentUser } = useAuth();
+
+  useEffect(() => {
+    api.get('/users/').then(r => setUsers(r.data)).finally(() => setLoading(false));
+  }, []);
+
+  const toggleAdmin = async (u) => {
+    setToggling(u.id);
+    try {
+      const res = await api.post(`/users/${u.id}/toggle-admin/`);
+      setUsers(p => p.map(x => x.id === u.id ? res.data : x));
+      addToast(`${u.email} is now ${res.data.is_staff ? 'an admin' : 'a regular user'}`, 'success');
+    } catch(e) {
+      addToast(e.response?.data?.detail || 'Failed to update', 'error');
+    } finally { setToggling(null); }
+  };
+
+  const filtered = users.filter(u =>
+    u.email.toLowerCase().includes(search.toLowerCase()) ||
+    (u.first_name + ' ' + u.last_name).toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:12,marginBottom:20,alignItems:'center',justifyContent:'space-between'}}>
+        <input className="form-input" style={{maxWidth:300}} placeholder="🔍 Search by name or email..."
+          value={search} onChange={e=>setSearch(e.target.value)}/>
+        <span style={{fontSize:'0.85rem',color:'var(--text-muted)'}}>{filtered.length} users</span>
+      </div>
+      {loading ? (
+        <div className="skeleton" style={{height:300,borderRadius:'var(--radius)'}}/>
+      ) : (
+        <div style={{background:'var(--white)',borderRadius:'var(--radius)',boxShadow:'var(--shadow)',overflow:'hidden'}}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Joined</th>
+                <th>Role</th>
+                <th style={{textAlign:'right'}}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(u=>(
+                <tr key={u.id}>
+                  <td style={{fontWeight:600}}>
+                    {u.first_name||u.last_name ? `${u.first_name} ${u.last_name}`.trim() : '—'}
+                  </td>
+                  <td style={{fontSize:'0.85rem',color:'var(--text-muted)'}}>{u.email}</td>
+                  <td style={{fontSize:'0.82rem',color:'var(--text-muted)'}}>
+                    {u.date_joined ? new Date(u.date_joined).toLocaleDateString() : '—'}
+                  </td>
+                  <td>
+                    {u.is_staff
+                      ? <span style={{background:'var(--orange-light)',color:'var(--orange)',padding:'3px 10px',borderRadius:'var(--radius-pill)',fontSize:'0.78rem',fontWeight:700}}>Admin</span>
+                      : <span style={{background:'var(--green-light)',color:'var(--green)',padding:'3px 10px',borderRadius:'var(--radius-pill)',fontSize:'0.78rem',fontWeight:600}}>User</span>
+                    }
+                  </td>
+                  <td style={{textAlign:'right'}}>
+                    {u.id===currentUser?.id ? (
+                      <span style={{fontSize:'0.78rem',color:'var(--text-muted)'}}>You</span>
+                    ) : (
+                      <button onClick={()=>toggleAdmin(u)} disabled={toggling===u.id}
+                        className={`btn btn-sm ${u.is_staff?'btn-danger':'btn-green'}`}
+                        style={{fontSize:'0.78rem',padding:'4px 12px'}}>
+                        {toggling===u.id ? '...' : u.is_staff ? 'Remove Admin' : 'Make Admin'}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
