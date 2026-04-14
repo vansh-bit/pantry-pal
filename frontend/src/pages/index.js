@@ -292,31 +292,159 @@ export function Search() {
   );
 }
 
+const CUISINE_EMOJIS_ADMIN = {
+  italian:'🍝',indian:'🍛',mexican:'🌮',chinese:'🥡',japanese:'🍱',
+  american:'🍔',french:'🥐',thai:'🍜',mediterranean:'🫒',default:'🍽️'
+};
+function cuisineEmoji(c) {
+  if (!c) return '🍽️';
+  const k = c.toLowerCase();
+  for (const [key,v] of Object.entries(CUISINE_EMOJIS_ADMIN)) { if (k.includes(key)) return v; }
+  return CUISINE_EMOJIS_ADMIN.default;
+}
+
+function StatCard({ icon, label, value, color }) {
+  return (
+    <div style={{background:'var(--white)',borderRadius:'var(--radius)',padding:'20px 24px',boxShadow:'var(--shadow)',display:'flex',alignItems:'center',gap:16,flex:1,minWidth:140}}>
+      <div style={{width:48,height:48,borderRadius:'50%',background:color||'var(--orange-light)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.4rem',flexShrink:0}}>{icon}</div>
+      <div>
+        <div style={{fontSize:'1.6rem',fontWeight:700,fontFamily:"'Playfair Display',serif",color:'var(--text)',lineHeight:1}}>{value}</div>
+        <div style={{fontSize:'0.8rem',color:'var(--text-muted)',marginTop:3}}>{label}</div>
+      </div>
+    </div>
+  );
+}
+
+function PendingCard({ recipe, onApprove, onReject, actionLoading }) {
+  const [expanded, setExpanded] = useState(false);
+  const [confirmReject, setConfirmReject] = useState(false);
+  const navigate = useNavigate();
+
+  return (
+    <div style={{background:'var(--white)',borderRadius:'var(--radius)',boxShadow:'var(--shadow)',overflow:'hidden',transition:'box-shadow .2s',border:'1px solid var(--border)'}}>
+      <div style={{display:'flex',gap:0}}>
+        {/* Left color accent */}
+        <div style={{width:5,background:'var(--orange)',flexShrink:0,borderRadius:'var(--radius) 0 0 var(--radius)'}}/>
+        <div style={{flex:1,padding:'20px 20px 20px 18px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:16,flexWrap:'wrap'}}>
+            <div style={{flex:1}}>
+              {/* Cuisine emoji + title */}
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+                <span style={{fontSize:'1.8rem'}}>{cuisineEmoji(recipe.cuisine)}</span>
+                <div>
+                  <div style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.15rem',lineHeight:1.2}}>{recipe.title}</div>
+                  <div style={{fontSize:'0.8rem',color:'var(--text-muted)',marginTop:2}}>
+                    by <strong style={{color:'var(--text)'}}>{recipe.author_name}</strong>
+                  </div>
+                </div>
+              </div>
+              {/* Meta row */}
+              <div style={{display:'flex',gap:16,flexWrap:'wrap',marginBottom:10}}>
+                {recipe.cuisine && <span style={{fontSize:'0.82rem',color:'var(--text-muted)',display:'flex',alignItems:'center',gap:4}}>🍽️ {recipe.cuisine}</span>}
+                {recipe.prep_time_mins && <span style={{fontSize:'0.82rem',color:'var(--text-muted)',display:'flex',alignItems:'center',gap:4}}>⏱ {recipe.prep_time_mins} min</span>}
+                {recipe.calories && <span style={{fontSize:'0.82rem',color:'var(--text-muted)',display:'flex',alignItems:'center',gap:4}}>🔥 {recipe.calories} cal</span>}
+                {recipe.servings && <span style={{fontSize:'0.82rem',color:'var(--text-muted)',display:'flex',alignItems:'center',gap:4}}>👥 {recipe.servings} servings</span>}
+              </div>
+              {/* Tags */}
+              {recipe.tags?.length > 0 && (
+                <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
+                  {recipe.tags.map(t=><span key={t.id} className="tag-pill">{t.tag_name}</span>)}
+                </div>
+              )}
+              {/* Expandable description */}
+              {recipe.description && (
+                <div style={{marginTop:4}}>
+                  <button onClick={()=>setExpanded(e=>!e)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--orange)',fontSize:'0.82rem',fontWeight:600,padding:0,fontFamily:"'Nunito',sans-serif"}}>
+                    {expanded ? '▲ Hide description' : '▼ Show description'}
+                  </button>
+                  {expanded && (
+                    <div style={{marginTop:8,padding:'12px 14px',background:'var(--cream)',borderRadius:'var(--radius-sm)',fontSize:'0.88rem',lineHeight:1.7,color:'var(--text)'}}>
+                      {recipe.description}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            {/* Actions */}
+            <div style={{display:'flex',flexDirection:'column',gap:8,alignItems:'flex-end',flexShrink:0}}>
+              <button className="btn btn-secondary btn-sm" onClick={()=>navigate(`/recipes/${recipe.id}`)} style={{whiteSpace:'nowrap'}}>
+                🔗 Preview
+              </button>
+              <button className="btn btn-green btn-sm" onClick={()=>onApprove(recipe.id)} disabled={actionLoading===recipe.id} style={{whiteSpace:'nowrap',minWidth:110}}>
+                {actionLoading===recipe.id ? '...' : '✓ Approve'}
+              </button>
+              {confirmReject ? (
+                <div style={{display:'flex',gap:6}}>
+                  <button className="btn btn-danger btn-sm" onClick={()=>{onReject(recipe.id);setConfirmReject(false);}} disabled={actionLoading===recipe.id} style={{whiteSpace:'nowrap'}}>
+                    Confirm Reject
+                  </button>
+                  <button className="btn btn-secondary btn-sm" onClick={()=>setConfirmReject(false)}>Cancel</button>
+                </div>
+              ) : (
+                <button className="btn btn-sm" onClick={()=>setConfirmReject(true)} style={{whiteSpace:'nowrap',minWidth:110,background:'#FEE2E2',color:'#991B1B',border:'none'}}>
+                  ✗ Reject
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AdminPanel() {
   const [tab, setTab] = useState('pending');
   const [pending, setPending] = useState([]);
+  const [allRecipes, setAllRecipes] = useState([]);
   const [ingredients, setIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { toasts, addToast, removeToast } = useToast();
+  const [actionLoading, setActionLoading] = useState(null);
+  const [ingSearch, setIngSearch] = useState('');
+  const [ingCategoryFilter, setIngCategoryFilter] = useState('all');
+  const [allFilter, setAllFilter] = useState('all');
   const [newIng, setNewIng] = useState({ name:'', category:'' });
+  const { toasts, addToast, removeToast } = useToast();
+  const navigate = useNavigate();
+
+  // Load pending count on mount for stat card
+  useEffect(() => {
+    api.get('/recipes/pending/').then(r=>setPending(r.data.results||r.data)).catch(()=>{});
+  }, []);
 
   useEffect(() => {
     setLoading(true);
-    if (tab==='pending') api.get('/recipes/pending/').then(r=>setPending(r.data.results||r.data)).finally(()=>setLoading(false));
-    else if (tab==='ingredients') api.get('/ingredients/').then(r=>setIngredients(r.data.results||r.data)).finally(()=>setLoading(false));
-    else setLoading(false);
+    if (tab==='pending') {
+      api.get('/recipes/pending/').then(r=>setPending(r.data.results||r.data)).finally(()=>setLoading(false));
+    } else if (tab==='ingredients') {
+      api.get('/ingredients/').then(r=>setIngredients(r.data.results||r.data)).finally(()=>setLoading(false));
+    } else if (tab==='all') {
+      api.get('/recipes/').then(r=>setAllRecipes(r.data.results||r.data)).finally(()=>setLoading(false));
+    } else {
+      setLoading(false);
+    }
   }, [tab]);
 
   const approve = async (id) => {
-    await api.post(`/recipes/${id}/approve/`);
-    setPending(p=>p.filter(r=>r.id!==id));
-    addToast('Recipe approved!','success');
+    setActionLoading(id);
+    try {
+      await api.post(`/recipes/${id}/approve/`);
+      setPending(p=>p.filter(r=>r.id!==id));
+      setAllRecipes(p=>p.map(r=>r.id===id?{...r,approval_status:'approved'}:r));
+      addToast('Recipe approved!','success');
+    } finally { setActionLoading(null); }
   };
+
   const reject = async (id) => {
-    await api.post(`/recipes/${id}/reject/`);
-    setPending(p=>p.filter(r=>r.id!==id));
-    addToast('Recipe rejected','error');
+    setActionLoading(id);
+    try {
+      await api.post(`/recipes/${id}/reject/`);
+      setPending(p=>p.filter(r=>r.id!==id));
+      setAllRecipes(p=>p.map(r=>r.id===id?{...r,approval_status:'rejected'}:r));
+      addToast('Recipe rejected','error');
+    } finally { setActionLoading(null); }
   };
+
   const addIngredient = async (e) => {
     e.preventDefault();
     try {
@@ -327,69 +455,224 @@ export function AdminPanel() {
     } catch(err) { addToast(err.response?.data?.name?.[0]||'Failed to add','error'); }
   };
 
+  const deleteIngredient = async (id) => {
+    try {
+      await api.delete(`/ingredients/${id}/`);
+      setIngredients(p=>p.filter(i=>i.id!==id));
+      addToast('Ingredient deleted','success');
+    } catch { addToast('Could not delete ingredient','error'); }
+  };
+
+  const ingCategories = ['all', ...Array.from(new Set(ingredients.map(i=>i.category).filter(Boolean)))];
+  const filteredIngs = ingredients.filter(i => {
+    const matchSearch = i.name.toLowerCase().includes(ingSearch.toLowerCase());
+    const matchCat = ingCategoryFilter==='all' || i.category===ingCategoryFilter;
+    return matchSearch && matchCat;
+  });
+  const filteredAll = allFilter==='all' ? allRecipes : allRecipes.filter(r=>r.approval_status===allFilter);
+
   return (
-    <div className="container page">
+    <div style={{background:'var(--cream)',minHeight:'calc(100vh - 140px)'}}>
       <ToastContainer toasts={toasts} removeToast={removeToast}/>
-      <h1 className="section-title" style={{marginBottom:8}}>Admin Panel</h1>
-      <p className="section-sub">Manage recipes and ingredients</p>
-      <div className="tabs">
-        <div className={`tab ${tab==='pending'?'active':''}`} onClick={()=>setTab('pending')}>
-          Pending Recipes{pending.length>0?` (${pending.length})`:''}
+
+      {/* Header banner */}
+      <div style={{background:'linear-gradient(135deg,var(--orange) 0%,#A84008 100%)',padding:'32px 0 28px',marginBottom:0}}>
+        <div className="container">
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16}}>
+            <div>
+              <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:'2rem',fontWeight:700,color:'#fff',margin:0}}>🛠 Admin Panel</h1>
+              <p style={{color:'rgba(255,255,255,0.8)',marginTop:6,fontSize:'0.95rem'}}>Review recipes, manage ingredients, oversee content</p>
+            </div>
+            <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+              <StatCard icon="⏳" label="Pending Review" value={pending.length} color="rgba(255,255,255,0.2)" />
+              <StatCard icon="🧄" label="Ingredients" value={ingredients.length||'—'} color="rgba(255,255,255,0.2)" />
+            </div>
+          </div>
         </div>
-        <div className={`tab ${tab==='ingredients'?'active':''}`} onClick={()=>setTab('ingredients')}>Ingredients</div>
       </div>
 
-      {tab==='pending' && (
-        loading ? <SkeletonGrid count={3}/> : pending.length===0 ? (
-          <EmptyState icon="✅" title="All caught up!" subtitle="No pending recipes to review."/>
-        ) : (
-          <div style={{display:'flex',flexDirection:'column',gap:16}}>
-            {pending.map(r=>(
-              <div key={r.id} className="card" style={{padding:20,display:'flex',justifyContent:'space-between',alignItems:'center',gap:16,flexWrap:'wrap'}}>
-                <div style={{flex:1}}>
-                  <div style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.1rem',marginBottom:4}}>{r.title}</div>
-                  <div style={{fontSize:'0.85rem',color:'var(--text-muted)'}}>by {r.author_name} · {r.cuisine} · {r.prep_time_mins} min</div>
-                  <div style={{marginTop:6,display:'flex',gap:6}}>{r.tags?.map(t=><span key={t.id} className="tag-pill">{t.tag_name}</span>)}</div>
-                </div>
-                <div style={{display:'flex',gap:8}}>
-                  <a href={`/recipes/${r.id}`} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm">Preview</a>
-                  <button className="btn btn-green btn-sm" onClick={()=>approve(r.id)}>✓ Approve</button>
-                  <button className="btn btn-danger btn-sm" onClick={()=>reject(r.id)}>✗ Reject</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )
-      )}
-
-      {tab==='ingredients' && (
-        <div>
-          <div className="card" style={{padding:20,marginBottom:24}}>
-            <div style={{fontWeight:700,marginBottom:14}}>Add New Ingredient</div>
-            <form onSubmit={addIngredient} style={{display:'grid',gridTemplateColumns:'1fr 1fr auto',gap:12,alignItems:'end'}}>
-              <div>
-                <label className="form-label">Name *</label>
-                <input className="form-input" value={newIng.name} onChange={e=>setNewIng(p=>({...p,name:e.target.value}))} placeholder="e.g. Mozzarella" required/>
-              </div>
-              <div>
-                <label className="form-label">Category</label>
-                <input className="form-input" value={newIng.category} onChange={e=>setNewIng(p=>({...p,category:e.target.value}))} placeholder="e.g. Dairy"/>
-              </div>
-              <button className="btn btn-primary" type="submit">Add</button>
-            </form>
-          </div>
-          <div className="card" style={{overflow:'hidden'}}>
-            <table className="data-table">
-              <thead><tr><th>Name</th><th>Category</th></tr></thead>
-              <tbody>
-                {ingredients.map(i=>(
-                  <tr key={i.id}><td style={{fontWeight:500}}>{i.name}</td><td style={{color:'var(--text-muted)'}}>{i.category||'—'}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      <div className="container" style={{paddingTop:28,paddingBottom:40}}>
+        {/* Tabs */}
+        <div style={{display:'flex',gap:0,background:'var(--white)',borderRadius:'var(--radius)',padding:6,boxShadow:'var(--shadow)',marginBottom:28,width:'fit-content'}}>
+          {[
+            {id:'pending',label:`⏳ Pending${pending.length>0?` (${pending.length})`:''}` },
+            {id:'all',label:'📋 All Recipes'},
+            {id:'ingredients',label:'🧄 Ingredients'},
+          ].map(t=>(
+            <button key={t.id} onClick={()=>setTab(t.id)} style={{
+              padding:'8px 20px',borderRadius:'var(--radius-sm)',border:'none',cursor:'pointer',
+              fontWeight:600,fontSize:'0.88rem',fontFamily:"'Nunito',sans-serif",transition:'all .2s',
+              background: tab===t.id ? 'var(--orange)' : 'transparent',
+              color: tab===t.id ? '#fff' : 'var(--text-muted)',
+            }}>{t.label}</button>
+          ))}
         </div>
-      )}
+
+        {/* PENDING TAB */}
+        {tab==='pending' && (
+          loading ? (
+            <div style={{display:'flex',flexDirection:'column',gap:16}}>
+              {[1,2,3].map(i=><div key={i} className="skeleton" style={{height:130,borderRadius:'var(--radius)'}}/>)}
+            </div>
+          ) : pending.length===0 ? (
+            <div style={{background:'var(--white)',borderRadius:'var(--radius)',padding:'60px 24px',textAlign:'center',boxShadow:'var(--shadow)'}}>
+              <div style={{fontSize:'3rem',marginBottom:12}}>✅</div>
+              <h3 style={{fontFamily:"'Playfair Display',serif",marginBottom:8}}>All caught up!</h3>
+              <p style={{color:'var(--text-muted)'}}>No recipes waiting for review. Come back later.</p>
+            </div>
+          ) : (
+            <div style={{display:'flex',flexDirection:'column',gap:14}}>
+              {pending.map(r=>(
+                <PendingCard key={r.id} recipe={r} onApprove={approve} onReject={reject} actionLoading={actionLoading}/>
+              ))}
+            </div>
+          )
+        )}
+
+        {/* ALL RECIPES TAB */}
+        {tab==='all' && (
+          <div>
+            <div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap',alignItems:'center',justifyContent:'space-between'}}>
+              <div style={{display:'flex',gap:8}}>
+                {['all','approved','pending','rejected'].map(s=>(
+                  <button key={s} className={`filter-pill ${allFilter===s?'active':''}`} onClick={()=>setAllFilter(s)} style={{fontSize:'0.82rem'}}>
+                    {s.charAt(0).toUpperCase()+s.slice(1)}
+                    {s!=='all' && ` (${allRecipes.filter(r=>r.approval_status===s).length})`}
+                  </button>
+                ))}
+              </div>
+              <span style={{fontSize:'0.85rem',color:'var(--text-muted)'}}>{filteredAll.length} recipes</span>
+            </div>
+            {loading ? (
+              <div className="skeleton" style={{height:400,borderRadius:'var(--radius)'}}/>
+            ) : filteredAll.length===0 ? (
+              <EmptyState icon="📋" title="No recipes here" subtitle="Try a different filter."/>
+            ) : (
+              <div style={{background:'var(--white)',borderRadius:'var(--radius)',boxShadow:'var(--shadow)',overflow:'hidden'}}>
+                <table className="data-table" style={{tableLayout:'fixed'}}>
+                  <thead>
+                    <tr>
+                      <th style={{width:'35%'}}>Recipe</th>
+                      <th style={{width:'15%'}}>Author</th>
+                      <th style={{width:'12%'}}>Cuisine</th>
+                      <th style={{width:'10%'}}>Time</th>
+                      <th style={{width:'13%'}}>Status</th>
+                      <th style={{width:'15%'}}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAll.map(r=>(
+                      <tr key={r.id}>
+                        <td>
+                          <div style={{fontWeight:600,fontSize:'0.9rem',cursor:'pointer',color:'var(--orange)'}} onClick={()=>navigate(`/recipes/${r.id}`)}>
+                            {cuisineEmoji(r.cuisine)} {r.title}
+                          </div>
+                          {r.tags?.slice(0,2).map(t=><span key={t.id} className="tag-pill" style={{fontSize:'0.7rem',padding:'2px 7px',marginRight:4}}>{t.tag_name}</span>)}
+                        </td>
+                        <td style={{fontSize:'0.85rem',color:'var(--text-muted)'}}>{r.author_name}</td>
+                        <td style={{fontSize:'0.85rem',color:'var(--text-muted)'}}>{r.cuisine||'—'}</td>
+                        <td style={{fontSize:'0.85rem',color:'var(--text-muted)'}}>{r.prep_time_mins ? `${r.prep_time_mins}m` : '—'}</td>
+                        <td>
+                          <span className={`badge badge-${r.approval_status||'pending'}`} style={{fontSize:'0.75rem'}}>
+                            {r.approval_status||'pending'}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{display:'flex',gap:6}}>
+                            {r.approval_status!=='approved' && (
+                              <button className="btn btn-green btn-sm" onClick={()=>approve(r.id)} disabled={actionLoading===r.id} style={{padding:'4px 10px',fontSize:'0.78rem'}}>✓</button>
+                            )}
+                            {r.approval_status!=='rejected' && (
+                              <button className="btn btn-danger btn-sm" onClick={()=>reject(r.id)} disabled={actionLoading===r.id} style={{padding:'4px 10px',fontSize:'0.78rem'}}>✗</button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* INGREDIENTS TAB */}
+        {tab==='ingredients' && (
+          <div>
+            {/* Add ingredient form */}
+            <div style={{background:'var(--white)',borderRadius:'var(--radius)',padding:'24px',marginBottom:24,boxShadow:'var(--shadow)'}}>
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:18}}>
+                <span style={{fontSize:'1.3rem'}}>➕</span>
+                <h3 style={{margin:0,fontFamily:"'Playfair Display',serif",fontSize:'1.1rem'}}>Add New Ingredient</h3>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr auto',gap:12,alignItems:'end'}}>
+                <div>
+                  <label className="form-label">Name *</label>
+                  <input className="form-input" value={newIng.name} onChange={e=>setNewIng(p=>({...p,name:e.target.value}))} placeholder="e.g. Mozzarella"
+                    onKeyDown={e=>{if(e.key==='Enter'&&newIng.name.trim()){addIngredient(e);}}}/>
+                </div>
+                <div>
+                  <label className="form-label">Category</label>
+                  <input className="form-input" value={newIng.category} onChange={e=>setNewIng(p=>({...p,category:e.target.value}))} placeholder="e.g. Dairy"/>
+                </div>
+                <button className="btn btn-primary" onClick={addIngredient} disabled={!newIng.name.trim()}>Add Ingredient</button>
+              </div>
+            </div>
+
+            {/* Search + filter row */}
+            <div style={{display:'flex',gap:12,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
+              <input className="form-input" style={{maxWidth:280,marginBottom:0}} placeholder="🔍 Search ingredients..." value={ingSearch} onChange={e=>setIngSearch(e.target.value)}/>
+              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                {ingCategories.map(c=>(
+                  <button key={c} className={`filter-pill ${ingCategoryFilter===c?'active':''}`} onClick={()=>setIngCategoryFilter(c)} style={{fontSize:'0.8rem',padding:'5px 12px'}}>
+                    {c==='all'?'All':c}
+                  </button>
+                ))}
+              </div>
+              <span style={{fontSize:'0.85rem',color:'var(--text-muted)',marginLeft:'auto'}}>{filteredIngs.length} ingredients</span>
+            </div>
+
+            {loading ? (
+              <div className="skeleton" style={{height:300,borderRadius:'var(--radius)'}}/>
+            ) : (
+              <div style={{background:'var(--white)',borderRadius:'var(--radius)',boxShadow:'var(--shadow)',overflow:'hidden'}}>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Name</th>
+                      <th>Category</th>
+                      <th style={{width:80,textAlign:'right'}}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredIngs.length===0 ? (
+                      <tr><td colSpan={4} style={{textAlign:'center',padding:'32px',color:'var(--text-muted)'}}>No ingredients match your search.</td></tr>
+                    ) : filteredIngs.map((ing,i)=>(
+                      <tr key={ing.id}>
+                        <td style={{color:'var(--text-muted)',fontSize:'0.8rem',width:40}}>{i+1}</td>
+                        <td style={{fontWeight:600}}>{ing.name}</td>
+                        <td>
+                          {ing.category
+                            ? <span style={{background:'var(--orange-light)',color:'var(--orange)',padding:'2px 10px',borderRadius:'var(--radius-pill)',fontSize:'0.78rem',fontWeight:600}}>{ing.category}</span>
+                            : <span style={{color:'var(--text-muted)',fontSize:'0.85rem'}}>—</span>
+                          }
+                        </td>
+                        <td style={{textAlign:'right'}}>
+                          <button onClick={()=>deleteIngredient(ing.id)} style={{background:'none',border:'none',cursor:'pointer',color:'#DC2626',fontSize:'1rem',padding:'2px 6px',borderRadius:4,transition:'background .15s'}}
+                            title="Delete ingredient" onMouseEnter={e=>e.target.style.background='#FEE2E2'} onMouseLeave={e=>e.target.style.background='none'}>
+                            🗑
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
